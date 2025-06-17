@@ -2,6 +2,13 @@
 name = "check_txt"
 version = "0.1.0"
 edition = "2021"
+authors = ["Jiaquan Pang <pjiaquan@gmail.com>"]
+description = "A powerful file security checker for TXT and EPUB files with virus scanning capabilities"
+license = "MIT"
+repository = "https://github.com/pjiaquan/check_txt"
+readme = "README.md"
+keywords = ["security", "file-checker", "virus-scan", "epub", "txt"]
+categories = ["security", "command-line-utilities", "web-programming::http-server"]
 
 [dependencies]
 anyhow = "1.0"
