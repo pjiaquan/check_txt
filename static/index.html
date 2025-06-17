@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Security Checker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            border: 2px dashed #4a5568;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.dragover {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .file-info {
+            display: none;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .check-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #4299e1;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">
+                File Security Checker
+            </h1>
+
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <div id="drop-zone" class="drop-zone rounded-lg p-8 text-center cursor-pointer mb-6">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">Drag and drop your file here or click to select</p>
+                    <input type="file" id="file-input" class="hidden" accept=".epub">
+                </div>
+
+                <div id="file-info" class="file-info bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-file text-blue-500 text-xl mr-3"></i>
+                            <div>
+                                <p id="file-name" class="font-medium text-gray-800"></p>
+                                <p id="file-size" class="text-sm text-gray-500"></p>
+                            </div>
+                        </div>
+                        <button id="remove-file" class="text-red-500 hover:text-red-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">
+                            File Type
+                        </label>
+                        <select id="file-type"
+                            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- <option value="txt">TXT</option> -->
+                            <option value="epub">EPUB</option>
+                            <!-- <option value="pdf">PDF</option> -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">
+                            Max File Size (MB)
+                        </label>
+                        <input type="number" id="max-size" value="100" min="1" max="1000"
+                            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="deep-scan" class="form-checkbox h-5 w-5 text-blue-500" checked>
+                        <span class="ml-2 text-gray-700">Deep Scan</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="virus-scan" class="form-checkbox h-5 w-5 text-blue-500" checked>
+                        <span class="ml-2 text-gray-700">Virus Scan</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-4">
+                    <button id="check-button"
+                        class="flex-1 bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition duration-200 check-button"
+                        disabled>
+                        Check Security
+                    </button>
+                    <button id="convert-button"
+                        class="flex-1 bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition duration-200"
+                        disabled>
+                        Convert to TXT
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="loading text-center mb-8">
+                <div class="flex flex-col items-center">
+                    <div
+                        class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mb-4">
+                    </div>
+                    <p class="text-gray-600 mb-2">Checking file security...</p>
+                    <p class="text-sm text-gray-500 pulse">This may take up to 30 seconds</p>
+                    <div class="progress-bar">
+                        <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="result" class="bg-white rounded-lg shadow-lg p-6 hidden">
+                <h2 class="text-2xl font-bold mb-4">Security Check Results</h2>
+                <div id="result-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const checkButton = document.getElementById('check-button');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const resultContent = document.getElementById('result-content');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const removeFile = document.getElementById('remove-file');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const convertButton = document.getElementById('convert-button');
+
+        let progressInterval;
+        const TIMEOUT_DURATION = 30000; // 30 seconds
+        const PROGRESS_UPDATE_INTERVAL = 100; // Update progress every 100ms
+
+        function updateFileInfo(file) {
+            if (file) {
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.classList.add('active');
+                checkButton.disabled = false;
+                convertButton.disabled = false;
+            } else {
+                fileInfo.classList.remove('active');
+                checkButton.disabled = true;
+                convertButton.disabled = true;
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function startProgressBar() {
+            let progress = 0;
+            progressBarFill.style.width = '0%';
+
+            progressInterval = setInterval(() => {
+                progress += (100 / (TIMEOUT_DURATION / PROGRESS_UPDATE_INTERVAL));
+                if (progress > 100) progress = 100;
+                progressBarFill.style.width = `${progress}%`;
+            }, PROGRESS_UPDATE_INTERVAL);
+        }
+
+        function stopProgressBar() {
+            clearInterval(progressInterval);
+            progressBarFill.style.width = '100%';
+        }
+
+        // Drag and drop handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('dragover');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        removeFile.addEventListener('click', () => {
+            fileInput.value = '';
+            updateFileInfo(null);
+        });
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                fileInput.files = files;
+                updateFileInfo(file);
+            }
+        }
+
+        checkButton.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const options = {
+                file_type: document.getElementById('file-type').value,
+                deep_scan: document.getElementById('deep-scan').checked,
+                virus_scan: document.getElementById('virus-scan').checked,
+                max_size: parseInt(document.getElementById('max-size').value)
+            };
+
+            formData.append('options', JSON.stringify(options));
+
+            loading.classList.add('active');
+            result.classList.add('hidden');
+            checkButton.disabled = true;
+            startProgressBar();
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_DURATION);
+
+                const response = await fetch('/check', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    displayError(new Error('Request timed out after 30 seconds'));
+                } else {
+                    displayError(error);
+                }
+            } finally {
+                loading.classList.remove('active');
+                checkButton.disabled = false;
+                stopProgressBar();
+            }
+        });
+
+        convertButton.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            loading.classList.add('active');
+            convertButton.disabled = true;
+            startProgressBar();
+
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Get the filename from the Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'converted.txt';
+                if (contentDisposition) {
+                    const matches = /filename\*=UTF-8''([^;]+)/.exec(contentDisposition);
+                    if (matches) {
+                        filename = decodeURIComponent(matches[1]);
+                    }
+                }
+
+                // Create a download link
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+            } catch (error) {
+                displayError(error);
+            } finally {
+                loading.classList.remove('active');
+                convertButton.disabled = false;
+                stopProgressBar();
+            }
+        });
+
+        function displayResults(data) {
+            result.classList.remove('hidden');
+            let html = `
+                <div class="mb-4">
+                    <div class="flex items-center ${data.secure ? 'text-green-500' : 'text-red-500'}">
+                        <i class="fas ${data.secure ? 'fa-check-circle' : 'fa-exclamation-circle'} text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold">${data.message}</span>
+                    </div>
+                </div>
+            `;
+
+            if (data.details) {
+                html += `
+                    <div class="mt-2 text-gray-600">
+                        <p>${data.details}</p>
+                    </div>
+                `;
+            }
+
+            if (data.issues.length > 0) {
+                html += `
+                    <div class="mt-4">
+                        <h3 class="text-lg font-semibold mb-2">Issues Found:</h3>
+                        <ul class="list-disc list-inside space-y-2">
+                            ${data.issues.map(issue => `<li class="text-gray-700">${issue}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            resultContent.innerHTML = html;
+        }
+
+        function displayError(error) {
+            result.classList.remove('hidden');
+            resultContent.innerHTML = `
+                <div class="text-red-500">
+                    <i class="fas fa-exclamation-circle text-2xl mr-2"></i>
+                    <span class="text-xl font-semibold">Error checking file</span>
+                    <p class="mt-2">${error.message}</p>
+                    <p class="mt-2 text-sm text-gray-600">Please try again or contact support if the problem persists.</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>

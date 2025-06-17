@@ -19,6 +19,7 @@ desktop.ini
 # Project specific
 /temp/
 /docs-cache/
+.docs-cache/
 .env
 *.log
 

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  check_txt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./temp:/app/temp
+      - ./static:/app/static
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8090
+      - MAX_FILE_SIZE=100
+      - DEEP_SCAN=true
+      - VIRUS_SCAN=true
+      - RUST_LOG=info
+    restart: unless-stopped 
