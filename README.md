@@ -1,5 +1,9 @@
 # Check TXT - File Security Checker
 
+<div align="center">
+  <img src="logo.png" alt="Check TXT Logo" width="200"/>
+</div>
+
 [English](#english) | [中文](#chinese)
 
 ---
