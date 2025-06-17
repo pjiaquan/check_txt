@@ -135,17 +135,35 @@
                     </label>
                 </div>
 
-                <div class="flex gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <button id="check-button"
-                        class="flex-1 bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition duration-200 check-button"
+                        class="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition duration-200 check-button"
                         disabled>
-                        Check Security
+                        <i class="fas fa-shield-alt mr-2"></i>Check Security
                     </button>
                     <button id="convert-button"
-                        class="flex-1 bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition duration-200"
+                        class="bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition duration-200"
                         disabled>
-                        Convert to TXT
+                        <i class="fas fa-file-alt mr-2"></i>Convert to TXT
                     </button>
+                    <button id="sanitize-button"
+                        class="bg-purple-500 text-white py-3 px-6 rounded-lg hover:bg-purple-600 transition duration-200"
+                        disabled>
+                        <i class="fas fa-broom mr-2"></i>Sanitize EPUB
+                    </button>
+                </div>
+
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-500 text-lg mr-3 mt-1"></i>
+                        <div class="text-sm text-gray-700">
+                            <strong>Sanitize EPUB:</strong> First performs a comprehensive security check, then removes
+                            QR code images completely and removes all
+                            advertisement text from the EPUB file. This creates a cleaner and safer version of your book
+                            with
+                            unwanted content removed. Process includes 30-second timeout protection.
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -182,6 +200,7 @@
         const removeFile = document.getElementById('remove-file');
         const progressBarFill = document.getElementById('progress-bar-fill');
         const convertButton = document.getElementById('convert-button');
+        const sanitizeButton = document.getElementById('sanitize-button');
 
         let progressInterval;
         const TIMEOUT_DURATION = 30000; // 30 seconds
@@ -194,10 +213,12 @@
                 fileInfo.classList.add('active');
                 checkButton.disabled = false;
                 convertButton.disabled = false;
+                sanitizeButton.disabled = false;
             } else {
                 fileInfo.classList.remove('active');
                 checkButton.disabled = true;
                 convertButton.disabled = true;
+                sanitizeButton.disabled = true;
             }
         }
 
@@ -384,6 +405,87 @@
                 loading.classList.remove('active');
                 convertButton.disabled = false;
                 stopProgressBar();
+            }
+        });
+
+        sanitizeButton.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            loading.classList.add('active');
+            sanitizeButton.disabled = true;
+
+            // Update loading message for sanitization
+            const loadingMessage = document.querySelector('#loading p');
+            loadingMessage.textContent = 'Performing security check and sanitizing EPUB...';
+
+            startProgressBar();
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_DURATION);
+
+                const response = await fetch('/sanitize', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: `HTTP error! status: ${response.status}` }));
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                // Get the filename from the Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = file.name; // Use original filename
+                if (contentDisposition) {
+                    const matches = /filename\*=UTF-8''([^;]+)/.exec(contentDisposition);
+                    if (matches) {
+                        filename = decodeURIComponent(matches[1]);
+                    }
+                }
+
+                // Create a download link
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                // Show success message
+                displayResults({
+                    secure: true,
+                    issues: [],
+                    message: 'EPUB sanitized successfully!',
+                    details: `Downloaded: ${filename}`
+                });
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    displayError(new Error('Sanitization timed out after 30 seconds. Please try with a smaller file.'));
+                } else {
+                    displayError(error);
+                }
+            } finally {
+                loading.classList.remove('active');
+                sanitizeButton.disabled = false;
+                stopProgressBar();
+
+                // Reset loading message
+                loadingMessage.textContent = 'Checking file security...';
             }
         });
 

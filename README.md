@@ -1,5 +1,20 @@
 # Check TXT - File Security Checker
 
+A powerful file security checker for TXT and EPUB files with virus scanning capabilities, QR code detection, and advertisement text removal.
+
+## 🚀 **Quick Start - Remove Advertisement Text**
+
+```bash
+# Automatic comprehensive cleaning when output path is provided
+# This will: Remove QR code images completely + Remove all advertisement text
+cargo run -- -p book.epub -f epub --sanitize -o clean_book.epub
+
+# Interactive mode (when no output path provided)
+cargo run -- -p book.epub -f epub --sanitize
+```
+
+**New Behavior:** When you provide an output path (`-o` or `--output`), the tool automatically uses the most comprehensive sanitization method: **Remove QR code images completely + Remove all advertisement text** (including the Telegram channel ad: '感谢Telegram 频道 @sharebooks4you制作，欢迎大家扫码订阅').
+
 <div align="center">
   <img src="logo.png" alt="Check TXT Logo" width="200"/>
 </div>
@@ -24,6 +39,16 @@ Check TXT is a powerful Rust-based file security checker designed to analyze tex
 - **File Size Control**: Configurable maximum file size limits
 - **Progress Tracking**: Real-time progress indicators for long operations
 - **EPUB to TXT Conversion**: Convert EPUB files to plain text format
+- **File Security Scanning**: Detects suspicious patterns, malware signatures, and potentially dangerous content
+- **Virus Scanning**: Integration with VirusTotal API for comprehensive virus detection
+- **EPUB Analysis**: Deep analysis of EPUB files including:
+  - Link extraction and analysis
+  - QR code detection in images
+  - Image analysis and processing
+  - Advertisement text detection and removal
+- **QR Code Sanitization**: Remove or blur QR codes from EPUB images
+- **Advertisement Text Removal**: Remove advertisement text patterns from EPUB content
+- **Flexible Configuration**: Customizable patterns and scanning options
 
 ### Security Checks
 
@@ -222,6 +247,16 @@ Check TXT 是一个基于 Rust 的强大文件安全检查器，专为分析文�
 - **文件大小控制**：可配置的最大文件大小限制
 - **进度跟踪**：长时间操作的实时进度指示器
 - **EPUB 转 TXT 转换**：将 EPUB 文件转换为纯文本格式
+- **文件安全扫描**：检测可疑模式、恶意软件签名和潜在危险内容
+- **病毒扫描**：与 VirusTotal API 集成进行全面病毒检测
+- **EPUB 分析**：深入分析 EPUB 文件，包括：
+  - 链接提取和分析
+  - 图像中二维码检测
+  - 图像分析和处理
+  - 广告文本检测和删除
+- **二维码消毒**：从 EPUB 图像中删除或模糊二维码
+- **广告文本删除**：从 EPUB 内容中删除广告文本模式
+- **灵活配置**：可定制的模式和扫描选项
 
 ### 安全检查
 
@@ -364,40 +399,3 @@ check_txt --path ./documents --file-type txt --deep-scan
 ### 项目结构
 
 ```
-check_txt/
-├── src/
-│   ├── main.rs          # 主 CLI 应用程序
-│   ├── virus_check.rs   # VirusTotal 集成
-│   └── web_server.rs    # Web 服务器实现
-├── static/
-│   └── index.html       # Web 界面
-├── temp/                # 临时文件存储
-├── Cargo.toml          # Rust 依赖项
-├── Dockerfile          # Docker 配置
-└── docker-compose.yml  # Docker Compose 设置
-```
-
-### 依赖项
-
-- **actix-web**：Web 界面的 Web 框架
-- **clap**：命令行参数解析
-- **reqwest**：API 调用的 HTTP 客户端
-- **serde**：序列化/反序列化
-- **tokio**：异步运行时
-- **walkdir**：目录遍历
-- **regex**：正则表达式匹配
-- **zip**：存档文件处理
-- **sha2**：加密哈希
-- **indicatif**：进度指示器
-
-### 贡献
-
-1. Fork 仓库
-2. 创建功能分支
-3. 进行更改
-4. 如果适用，添加测试
-5. 提交拉取请求
-
-### 许可证
-
-本项目采用 MIT 许可证 - 详情请参阅 LICENSE 文件。 

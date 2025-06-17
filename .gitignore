@@ -22,6 +22,7 @@ desktop.ini
 .docs-cache/
 .env
 *.log
+epub/
 
 # Build artifacts
 *.exe
