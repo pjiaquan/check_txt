@@ -15,7 +15,7 @@ COPY . .
 RUN cargo build --release
 
 # Runtime stage
-FROM debian:bookworm-slim
+FROM debian:12.11-slim
 
 WORKDIR /usr/local/bin
 
