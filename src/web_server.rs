@@ -101,9 +101,9 @@ async fn check_file(
             continue; // Skip additional fields after processing the first file
         }
 
-        let content_disposition = field.content_disposition();
-        let filename = content_disposition
-            .get_filename()
+        let filename = field
+            .content_disposition()
+            .and_then(|content_disposition| content_disposition.get_filename())
             .map(ToString::to_string)
             .unwrap_or_else(|| String::from("unknown"));
 
@@ -278,9 +278,9 @@ async fn convert_epub_to_txt(mut payload: Multipart) -> Result<HttpResponse, Err
 
     // Process the uploaded file
     while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_disposition = field.content_disposition();
-        let filename = content_disposition
-            .get_filename()
+        let filename = field
+            .content_disposition()
+            .and_then(|content_disposition| content_disposition.get_filename())
             .map(ToString::to_string)
             .unwrap_or_else(|| String::from("unknown"));
 
@@ -376,7 +376,8 @@ async fn convert_epub_to_txt(mut payload: Multipart) -> Result<HttpResponse, Err
                     file.read_to_string(&mut html_content)?;
 
                     // Convert HTML to text with better formatting
-                    let text = from_read(html_content.as_bytes(), 100);
+                    let text = from_read(html_content.as_bytes(), 100)
+                        .map_err(std::io::Error::other)?;
                     content.push_str(&text);
                     content.push_str("\n\n---\n\n"); // Add separator between chapters
                 }
@@ -442,9 +443,9 @@ async fn sanitize_epub(
 
     // Process the uploaded file
     while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_disposition = field.content_disposition();
-        let filename = content_disposition
-            .get_filename()
+        let filename = field
+            .content_disposition()
+            .and_then(|content_disposition| content_disposition.get_filename())
             .map(ToString::to_string)
             .unwrap_or_else(|| String::from("unknown"));
 

@@ -18,11 +18,10 @@ use html5ever::tendril::TendrilSink;
 use markup5ever_rcdom::{ Handle, NodeData, RcDom };
 
 use std::io::Cursor;
-use image::{ ImageFormat, DynamicImage };
-use image::io::Reader as ImageReader;
+use image::{ DynamicImage, ImageReader };
 use std::path::Path;
 use rqrr;
-use zip::write::FileOptions;
+use zip::write::SimpleFileOptions;
 use std::io::Write;
 
 #[derive(Parser, Debug)]
@@ -1147,8 +1146,7 @@ impl EpubSanitizer {
             }
 
             // Write file to output archive
-            let options = zip::write::FileOptions
-                ::default()
+            let options = SimpleFileOptions::default()
                 .compression_method(zip::CompressionMethod::Deflated)
                 .unix_permissions(0o755);
 
@@ -1159,9 +1157,6 @@ impl EpubSanitizer {
         }
 
         output_archive.finish()?;
-
-        // Ensure the file is fully written and flushed to disk
-        drop(output_archive);
 
         // Add a small delay to ensure file system operations complete
         std::thread::sleep(std::time::Duration::from_millis(50));
@@ -1327,8 +1322,7 @@ impl EpubSanitizer {
             }
 
             // Write file to output archive
-            let options = zip::write::FileOptions
-                ::default()
+            let options = SimpleFileOptions::default()
                 .compression_method(zip::CompressionMethod::Deflated)
                 .unix_permissions(0o755);
 
@@ -1339,9 +1333,6 @@ impl EpubSanitizer {
         }
 
         output_archive.finish()?;
-
-        // Ensure the file is fully written and flushed to disk
-        drop(output_archive);
 
         // Add a small delay to ensure file system operations complete
         std::thread::sleep(std::time::Duration::from_millis(50));
