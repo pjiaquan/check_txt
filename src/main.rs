@@ -3,7 +3,6 @@ mod web_server;
 
 use anyhow::{ Result };
 use clap::Parser;
-use indicatif::ProgressBar;
 use regex::Regex;
 use std::fs::File;
 use std::io::{ BufRead, BufReader, Read };
@@ -1456,12 +1455,11 @@ async fn main() -> Result<()> {
     }
 
     let security_check = SecurityCheck::new(args.max_size, args.deep_scan, args.virus_scan)?;
-    let pb = ProgressBar::new_spinner();
 
     println!("Starting security check...");
 
     if path.is_file() {
-        pb.set_message(format!("Checking file: {}", path.display()));
+        println!("Checking file: {}", path.display());
         match security_check.check_file(&path).await {
             Ok(issues) => {
                 if issues.is_empty() {
@@ -1476,7 +1474,7 @@ async fn main() -> Result<()> {
             Err(e) => println!("Error checking file: {}", e),
         }
     } else if path.is_dir() {
-        pb.set_message(format!("Scanning directory: {}", path.display()));
+        println!("Scanning directory: {}", path.display());
         for entry in WalkDir::new(&path)
             .into_iter()
             .filter_map(|e| e.ok()) {
@@ -1484,7 +1482,7 @@ async fn main() -> Result<()> {
             if path.is_file() {
                 if let Some(ext) = path.extension() {
                     if ext.to_string_lossy() == file_type {
-                        pb.set_message(format!("Checking: {}", path.display()));
+                        println!("Checking: {}", path.display());
                         match security_check.check_file(&path.to_path_buf()).await {
                             Ok(issues) => {
                                 if !issues.is_empty() {
@@ -1502,6 +1500,6 @@ async fn main() -> Result<()> {
         }
     }
 
-    pb.finish_with_message("Security check completed!");
+    println!("Security check completed!");
     Ok(())
 }

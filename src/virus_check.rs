@@ -44,7 +44,7 @@ pub struct VirusChecker {
 
 impl VirusChecker {
     pub fn new() -> Result<Self> {
-        dotenv::dotenv().ok();
+        dotenvy::dotenv().ok();
         let api_key = env
             ::var("VIRUSTOTAL_API_KEY")
             .map_err(|_| anyhow::anyhow!("VIRUSTOTAL_API_KEY not found in environment variables"))?;
